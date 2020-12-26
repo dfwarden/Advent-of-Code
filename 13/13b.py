@@ -1,5 +1,4 @@
-import copy
-
+import math
 
 def run():
     '''
@@ -22,23 +21,42 @@ def run():
     We want to find the earliest timestamp T where each bus
     departs X minutes after T where X is its index in the list of all busses, including 'x'.
 
-    There are too many possibilities to brute force. Need to reduce the possibilities.
-
     We're looking for a multiplier for each bus to see if (bus * multiplier) - index = T
 
-    This might require math. I think these are coprime.
+    This might require math.
+    These are all prime, so the least common multiple is these numbers multiplied together.
+    But the fact that we want to divide them by different numbers makes things tricky.
+
+    If the offset is greater than the bus, it can be reduced to offset % bus.
+
+    There should be an additional multiplier for each bus to give
+    us the best chance of getting the numbers close for the iteration
+    multiplier.
     '''
-    max_value = 100000000000000 * 1000  # hopefully this is big enough
-    for multiple in range(busses_sorted[0][1], max_value, busses_sorted[0][1]):
-        t_candidate = multiple - busses_sorted[0][0]
-        t_found = True
-        for (offset, bus) in busses_sorted:
-            # if t_candidate + offset % bus == 0, that's good
-            if not (t_candidate + offset) % bus == 0:
-                t_found = False
-        if t_found:
-            print(f'found correct t_candidate: {t_candidate}')
-            break
+    busses_reduced = [(offset % bus, bus) if offset > bus else (offset, bus) for (offset, bus) in busses_sorted]
+    print(f'Reduced busses:\n{busses_reduced}')
+    biggest_bus = busses_sorted[0][1]
+    for iteration in range(1, 10000000000000):
+        if iteration % 100000 == 0:
+            print(f'Iteration {iteration}...')
+        # First, calculate about how many times each bus goes in to the biggest bus for this iteration
+        multipliers = [round((biggest_bus * iteration) / bus) for (offset, bus) in busses_sorted]
+        t_candidates = [(multipliers[i] * busses_sorted[i][1]) - busses_sorted[i][0] for i in range(0, len(multipliers))]
+        # check candidates
+        target = t_candidates[0]
+        results = []
+        for (i, candidate) in enumerate(t_candidates):
+            results.append(candidate == target or candidate - busses_sorted[i][1] == target or candidate + busses_sorted[i][1] == target)
+        if all(results):
+            print(f'==== SUCCESS ====')
+            print(f'Multipliers for iteration {iteration} are:\n{multipliers}')
+            print(f'Candidates for iteration {iteration} are:\n{sorted(t_candidates)}')
+            return
+        #if min(t_candidates) >= 1202161486:
+        #    print(f'went too far, quitting. iteration {iteration}')
+        #    print(f'Multipliers for iteration {iteration} are:\n{multipliers}')
+        #    print(f'Candidates for iteration {iteration} are:\n{sorted(t_candidates)}')
+        #    return
 
 
 
